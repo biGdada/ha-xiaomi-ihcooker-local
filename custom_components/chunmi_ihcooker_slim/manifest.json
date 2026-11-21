@@ -1,0 +1,13 @@
+{
+  "domain": "chunmi_ihcooker_slim",
+  "name": "Chunmi IH Cooker Slim (Local)",
+  "codeowners": ["@biGdada"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/biGdada/ha-xiaomi-ihcooker-local",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/biGdada/ha-xiaomi-ihcooker-local/issues",
+  "requirements": ["python-miio==0.5.12"],
+  "version": "0.1.0"
+}

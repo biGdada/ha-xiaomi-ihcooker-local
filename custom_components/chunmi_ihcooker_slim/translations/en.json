@@ -1,0 +1,161 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Chunmi IH Cooker Slim",
+        "description": "Connect locally over miIO using the device IP and 32-character token.",
+        "data": {
+          "host": "IP address",
+          "token": "miIO token (32 hex characters)",
+          "name": "Device name",
+          "scan_interval": "Polling interval (seconds)",
+          "timeout": "Connection timeout (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the cooker. Check the IP address and token.",
+      "invalid_token": "The token must be exactly 32 hexadecimal characters.",
+      "wrong_model": "The device is not a chunmi.ihcooker.slim."
+    },
+    "abort": {
+      "already_configured": "This cooker is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Cooker options",
+        "data": {
+          "scan_interval": "Polling interval (seconds)",
+          "timeout": "Connection timeout (seconds)",
+          "user_id": "MIoT user ID",
+          "information": "MIoT information tag"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the cooker.",
+      "invalid_token": "The stored token is invalid."
+    }
+  },
+  "services": {
+    "start_cook": {
+      "name": "Start built-in mode",
+      "description": "Start a built-in cooking mode using action 2/1. Cloud-only on firmware 2.2.0_0005.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "mode": { "name": "Mode", "description": "1=Hotpot, 2=Steam boil, 3=Simmer, 4=Stir fry, 5=Deep fry." }
+      }
+    },
+    "cancel_cooking": {
+      "name": "Cancel cooking",
+      "description": "Cancel the current program.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "pause": {
+      "name": "Pause",
+      "description": "Pause the current program.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "start_cooking": {
+      "name": "Start recipe",
+      "description": "Start a raw cook script.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "name": { "name": "Recipe name", "description": "Recipe name, GBK encoded on the wire." },
+        "cook_data": { "name": "Cook data", "description": "Hex encoded cook script." }
+      }
+    },
+    "pause_cooking": {
+      "name": "Pause cooking (v2)",
+      "description": "Action 3/2.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "resume_cooking": {
+      "name": "Resume cooking",
+      "description": "Action 3/3.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "cancel_cooking_v2": {
+      "name": "Cancel cooking (v2)",
+      "description": "Action 3/4.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "set_menu": {
+      "name": "Save recipe to menu",
+      "description": "Action 3/5.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "name": { "name": "Recipe name", "description": "Recipe name." },
+        "cook_data": { "name": "Cook data", "description": "Hex encoded cook script." },
+        "bell": { "name": "Bell", "description": "Sound the bell." }
+      }
+    },
+    "delete_menu": {
+      "name": "Delete menu entry",
+      "description": "Action 3/6.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "menu_order": { "name": "Menu slot", "description": "Menu slot index." },
+        "bell": { "name": "Bell", "description": "Sound the bell." }
+      }
+    },
+    "continue_cooking": {
+      "name": "Continue cooking",
+      "description": "Action 3/7.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "next_step": {
+      "name": "Next step",
+      "description": "Action 3/8.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "factory_reset": {
+      "name": "Factory reset",
+      "description": "Action 3/9.",
+      "fields": { "device_id": { "name": "Device", "description": "Target cooker." } }
+    },
+    "set_charge": {
+      "name": "Set charge",
+      "description": "Action 3/10.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "cook_data": { "name": "Charge data", "description": "Hex encoded charge data." }
+      }
+    },
+    "get_selfcheck": {
+      "name": "Run self check",
+      "description": "Action 3/12.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "command": { "name": "Command", "description": "Self-check command code." }
+      }
+    },
+    "start_simple_recipe": {
+      "name": "Start simple recipe",
+      "description": "Generate a single-stage cook script and start it.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "name": { "name": "Recipe name", "description": "Recipe name." },
+        "minutes": { "name": "Minutes", "description": "Cooking duration." },
+        "mode": { "name": "Mode", "description": "Fire level or temperature." },
+        "value": { "name": "Value", "description": "Fire level or target temperature." },
+        "menu_index": { "name": "Menu index", "description": "Menu slot index." }
+      }
+    },
+    "set_simple_menu": {
+      "name": "Save simple recipe",
+      "description": "Generate a single-stage cook script and save it.",
+      "fields": {
+        "device_id": { "name": "Device", "description": "Target cooker." },
+        "name": { "name": "Recipe name", "description": "Recipe name." },
+        "minutes": { "name": "Minutes", "description": "Cooking duration." },
+        "mode": { "name": "Mode", "description": "Fire level or temperature." },
+        "value": { "name": "Value", "description": "Fire level or target temperature." },
+        "menu_index": { "name": "Menu index", "description": "Menu slot index." },
+        "bell": { "name": "Bell", "description": "Sound the bell." }
+      }
+    }
+  }
+}

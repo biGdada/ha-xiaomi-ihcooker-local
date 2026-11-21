@@ -1,0 +1,298 @@
+start_cook:
+  name: Start built-in mode
+  description: >-
+    Start one of the five built-in modes using MIoT action 2/1. This action is
+    not implemented locally on firmware 2.2.0_0005 and will report an error.
+  fields:
+    device_id:
+      name: Device
+      description: Target cooker device ID. Optional when only one cooker is configured.
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    mode:
+      name: Mode
+      description: 1=Hotpot, 2=Steam boil, 3=Simmer, 4=Stir fry, 5=Deep fry.
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 5
+          mode: slider
+
+cancel_cooking:
+  name: Cancel cooking
+  description: Cancel the current program (verified working on 2.2.0_0005).
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+pause:
+  name: Pause
+  description: Pause the current program (verified working on 2.2.0_0005).
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+start_cooking:
+  name: Start recipe
+  description: >-
+    Start a raw cook script. Requires a GBK recipe name and a hex cook_data
+    string. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    name:
+      name: Recipe name
+      required: true
+      selector:
+        text:
+    cook_data:
+      name: Cook data
+      description: Hex encoded cook script with trailing CRC-16.
+      required: true
+      selector:
+        text:
+
+pause_cooking:
+  name: Pause cooking (v2)
+  description: MIoT action 3/2. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+resume_cooking:
+  name: Resume cooking
+  description: MIoT action 3/3. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+cancel_cooking_v2:
+  name: Cancel cooking (v2)
+  description: MIoT action 3/4. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+set_menu:
+  name: Save recipe to menu
+  description: MIoT action 3/5. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    name:
+      name: Recipe name
+      required: true
+      selector:
+        text:
+    cook_data:
+      name: Cook data
+      required: true
+      selector:
+        text:
+    bell:
+      name: Bell
+      default: false
+      selector:
+        boolean:
+
+delete_menu:
+  name: Delete menu entry
+  description: MIoT action 3/6. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    menu_order:
+      name: Menu slot
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+    bell:
+      name: Bell
+      default: false
+      selector:
+        boolean:
+
+continue_cooking:
+  name: Continue cooking
+  description: MIoT action 3/7. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+next_step:
+  name: Next step
+  description: MIoT action 3/8. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+factory_reset:
+  name: Factory reset
+  description: MIoT action 3/9. Use with care. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+
+set_charge:
+  name: Set charge
+  description: MIoT action 3/10. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    cook_data:
+      name: Charge data
+      required: true
+      selector:
+        text:
+
+get_selfcheck:
+  name: Run self check
+  description: MIoT action 3/12. Cloud-only on firmware 2.2.0_0005.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    command:
+      name: Command
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+
+start_simple_recipe:
+  name: Start simple recipe
+  description: >-
+    Build a single-stage cook script and start it (MIoT action 3/1). The
+    generated profile uses the same layout as the Mi Home plugin.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    name:
+      name: Recipe name
+      required: true
+      selector:
+        text:
+    minutes:
+      name: Minutes
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 240
+    mode:
+      name: Mode
+      required: true
+      selector:
+        select:
+          options:
+            - fire
+            - temperature
+    value:
+      name: Fire level or temperature
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 1000
+    menu_index:
+      name: Menu index
+      default: 9
+      selector:
+        number:
+          min: 0
+          max: 255
+
+set_simple_menu:
+  name: Save simple recipe
+  description: Build a single-stage cook script and save it with MIoT action 3/5.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    name:
+      name: Recipe name
+      required: true
+      selector:
+        text:
+    minutes:
+      name: Minutes
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 240
+    mode:
+      name: Mode
+      required: true
+      selector:
+        select:
+          options:
+            - fire
+            - temperature
+    value:
+      name: Fire level or temperature
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 1000
+    menu_index:
+      name: Menu index
+      default: 9
+      selector:
+        number:
+          min: 0
+          max: 255
+    bell:
+      name: Bell
+      default: false
+      selector:
+        boolean:

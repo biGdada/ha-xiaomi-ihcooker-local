@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "米家超薄电磁炉",
+        "description": "通过 miIO 设备 IP 和 32 位 token 本地连接。",
+        "data": {
+          "host": "IP 地址",
+          "token": "miIO token（32 位十六进制）",
+          "name": "设备名称",
+          "scan_interval": "轮询间隔（秒）",
+          "timeout": "连接超时（秒）"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接电磁炉，请检查 IP 和 token。",
+      "invalid_token": "token 必须是 32 位十六进制字符。",
+      "wrong_model": "该设备不是 chunmi.ihcooker.slim。"
+    },
+    "abort": {
+      "already_configured": "该电磁炉已配置。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "电磁炉选项",
+        "data": {
+          "scan_interval": "轮询间隔（秒）",
+          "timeout": "连接超时（秒）",
+          "user_id": "MIoT 用户 ID",
+          "information": "MIoT 信息标识"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接电磁炉。",
+      "invalid_token": "保存的 token 无效。"
+    }
+  },
+  "services": {
+    "start_cook": { "name": "启动内置模式" },
+    "cancel_cooking": { "name": "取消烹饪" },
+    "pause": { "name": "暂停" },
+    "start_cooking": { "name": "启动食谱" },
+    "pause_cooking": { "name": "暂停烹饪（v2）" },
+    "resume_cooking": { "name": "继续烹饪" },
+    "cancel_cooking_v2": { "name": "取消烹饪（v2）" },
+    "set_menu": { "name": "保存食谱到菜单" },
+    "delete_menu": { "name": "删除菜单" },
+    "continue_cooking": { "name": "继续下一步" },
+    "next_step": { "name": "下一步" },
+    "factory_reset": { "name": "恢复出厂设置" },
+    "set_charge": { "name": "设置充电" },
+    "get_selfcheck": { "name": "运行自检" },
+    "start_simple_recipe": { "name": "启动简易食谱" },
+    "set_simple_menu": { "name": "保存简易食谱" }
+  }
+}

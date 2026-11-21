@@ -1,0 +1,20 @@
+{
+  "services": {
+    "start_cook": "mdi:play",
+    "cancel_cooking": "mdi:stop",
+    "pause": "mdi:pause",
+    "start_cooking": "mdi:play-circle-outline",
+    "pause_cooking": "mdi:pause-circle-outline",
+    "resume_cooking": "mdi:play-circle",
+    "cancel_cooking_v2": "mdi:stop-circle",
+    "set_menu": "mdi:content-save",
+    "delete_menu": "mdi:delete",
+    "continue_cooking": "mdi:skip-next",
+    "next_step": "mdi:step-forward",
+    "factory_reset": "mdi:restore",
+    "set_charge": "mdi:battery-charging",
+    "get_selfcheck": "mdi:stove",
+    "start_simple_recipe": "mdi:food",
+    "set_simple_menu": "mdi:food-outline"
+  }
+}
