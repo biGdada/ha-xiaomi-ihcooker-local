@@ -4,6 +4,32 @@
       "user": {
         "title": "Chunmi IH Cooker Slim",
         "description": "Connect locally over miIO using the device IP and 32-character token.",
+        "menu_options": {
+          "manual": "Enter IP and token manually",
+          "import": "Import token from another Xiaomi integration"
+        }
+      },
+      "manual": {
+        "title": "Manual connection details",
+        "description": "Enter the cooker's local IP address and 32-character miIO token.",
+        "data": {
+          "host": "IP address",
+          "token": "miIO token (32 hex characters)",
+          "name": "Device name",
+          "scan_interval": "Polling interval (seconds)",
+          "timeout": "Connection timeout (seconds)"
+        }
+      },
+      "import": {
+        "title": "Import a Xiaomi token",
+        "description": "Select a cooker token found in the local Xiaomi Home or Xiaomi Miot storage.",
+        "data": {
+          "candidate": "Detected device"
+        }
+      },
+      "import_details": {
+        "title": "Confirm connection details",
+        "description": "Check the imported details, then test the local connection.",
         "data": {
           "host": "IP address",
           "token": "miIO token (32 hex characters)",
@@ -16,10 +42,12 @@
     "error": {
       "cannot_connect": "Cannot connect to the cooker. Check the IP address and token.",
       "invalid_token": "The token must be exactly 32 hexadecimal characters.",
-      "wrong_model": "The device is not a chunmi.ihcooker.slim."
+      "wrong_model": "The device is not a chunmi.ihcooker.slim.",
+      "invalid_candidate": "The selected device was not found."
     },
     "abort": {
-      "already_configured": "This cooker is already configured."
+      "already_configured": "This cooker is already configured.",
+      "no_tokens": "No cooker tokens were found in other locally installed Xiaomi integrations."
     }
   },
   "options": {

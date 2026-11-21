@@ -4,6 +4,32 @@
       "user": {
         "title": "米家超薄电磁炉",
         "description": "通过 miIO 设备 IP 和 32 位 token 本地连接。",
+        "menu_options": {
+          "manual": "手动输入 IP 和 token",
+          "import": "从其他小米集成导入 token"
+        }
+      },
+      "manual": {
+        "title": "手动连接信息",
+        "description": "输入电磁炉的本地 IP 地址和 32 位 miIO token。",
+        "data": {
+          "host": "IP 地址",
+          "token": "miIO token（32 位十六进制）",
+          "name": "设备名称",
+          "scan_interval": "轮询间隔（秒）",
+          "timeout": "连接超时（秒）"
+        }
+      },
+      "import": {
+        "title": "导入小米 token",
+        "description": "选择从本地 Xiaomi Home 或 Xiaomi Miot 存储中发现的电磁炉 token。",
+        "data": {
+          "candidate": "检测到的设备"
+        }
+      },
+      "import_details": {
+        "title": "确认连接信息",
+        "description": "检查导入的信息，然后测试本地连接。",
         "data": {
           "host": "IP 地址",
           "token": "miIO token（32 位十六进制）",
@@ -16,10 +42,12 @@
     "error": {
       "cannot_connect": "无法连接电磁炉，请检查 IP 和 token。",
       "invalid_token": "token 必须是 32 位十六进制字符。",
-      "wrong_model": "该设备不是 chunmi.ihcooker.slim。"
+      "wrong_model": "该设备不是 chunmi.ihcooker.slim。",
+      "invalid_candidate": "未找到所选设备。"
     },
     "abort": {
-      "already_configured": "该电磁炉已配置。"
+      "already_configured": "该电磁炉已配置。",
+      "no_tokens": "未在其他本地安装的小米集成中找到电磁炉 token。"
     }
   },
   "options": {

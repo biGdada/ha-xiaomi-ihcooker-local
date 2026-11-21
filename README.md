@@ -52,17 +52,22 @@ directory and restart.
 
 ## Getting the token
 
-The token is the same one used by the official Xiaomi Home integration. On a Home
-Assistant host it can be read from:
+The config flow can import the token automatically from locally installed Xiaomi
+integrations:
 
-```text
-/config/.storage/xiaomi_home/miot_devices/*.dict
-```
+- **Xiaomi Home (official)**: `.storage/xiaomi_home/miot_devices/*.dict`
+- **Xiaomi Miot (`hass-xiaomi-miot`)**: config entry data/options
 
-Look for the record whose `did` matches your cooker and take its 32-hex-character
-`token`. You can also extract a token from a backed-up Mi Home app database or by
-using one of the standard miIO token extraction methods. The integration always
-connects directly to the device IP and never contacts the cloud.
+Choose *Import token from another Xiaomi integration* when adding the cooker, select
+the detected device, then confirm its IP address. Only devices whose model is
+`chunmi.ihcooker.slim` are shown.
+
+Manual fallback: the official Xiaomi Home integration stores the token in the same
+`*.dict` file above as JSON plus a SHA-256 checksum. Look for the record whose `did`
+matches your cooker and take its 32-hex-character `token`. You can also extract a
+token from a backed-up Mi Home app database or by using one of the standard miIO
+token extraction methods. The integration always connects directly to the device IP
+and never contacts the cloud.
 
 ## Configuration
 
