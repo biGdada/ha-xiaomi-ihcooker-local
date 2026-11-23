@@ -18,13 +18,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-DEFAULT_PROFILE_SIZE = 36
+# Every cloud profile captured from the app for this model is 160 bytes.  The
+# old 36-byte generator never reached the phase interpreter on real hardware.
+DEFAULT_PROFILE_SIZE = 160
 DEFAULT_DEVICE_TYPE = 3
 DEFAULT_SMALL_TYPE = 2
 DEFAULT_FIRE = 45
 DEFAULT_TEMPERATURE = 100
 DEFAULT_MINUTES = 30
-DEFAULT_UP_TEMPERATURE = 249
+DEFAULT_UP_TEMPERATURE = 255
 DEFAULT_MENU_INDEX = 9  # plugin uses 9 for start-cooking, 0 for manual mode
 
 RECIPE_TYPE_SINGLE_FIRE = 1
@@ -34,8 +36,13 @@ RECIPE_TYPE_RECIPE = 4
 
 
 def encode_gbk(value: str) -> str:
-    """Encode a recipe name the way the official Mi Home plugin does."""
-    return value.encode("gbk", errors="replace").hex()
+    """Encode a recipe name the way the official Mi Home plugin does.
+
+    ``CMCookProfile.getGBK()`` appends the literal two-character string ``"00"``
+    after the GBK bytes.  It is a hex-string terminator, not an extra NUL byte;
+    the hardware-tested harness uses exactly this form.
+    """
+    return value.encode("gbk", errors="replace").hex() + "00"
 
 
 def decode_gbk(value: str | bytes | None) -> str | None:
@@ -87,6 +94,26 @@ def crc16(data: bytes) -> int:
             else:
                 crc <<= 1
     return crc & 0xFFFF
+
+
+def make_runnable(cookcode: str) -> str:
+    """Normalize a cloud cook script for local action 3/1.
+
+    The official plugin's ``formData()`` writes ``01`` into byte 19 and then
+    recalculates the trailing CRC.  Cloud profiles ship with ``02`` there and
+    were refused by the cooker until this transform was applied.
+    """
+    try:
+        data = bytearray(bytes.fromhex(cookcode))
+    except ValueError as exc:
+        raise ValueError("cookcode must be a valid hex string") from exc
+    if len(data) != DEFAULT_PROFILE_SIZE:
+        raise ValueError(f"Unexpected cookcode length: {len(data)} bytes")
+    if data[0] != DEFAULT_DEVICE_TYPE or data[2] != DEFAULT_MENU_INDEX:
+        raise ValueError("Not a Chunmi slim cloud cook script")
+    data[19] = 1
+    data[-2:] = crc16(bytes(data[:-2])).to_bytes(2, "big")
+    return data.hex()
 
 
 @dataclass
@@ -244,6 +271,11 @@ class CookProfile:
     @recipe_type.setter
     def recipe_type(self, value: int) -> None:
         self.data[18] = value & 0xFF
+
+    @property
+    def operation_source(self) -> int:
+        """Byte 19: nonzero means use the supplied profile, not a stored one."""
+        return self.data[19]
 
     @property
     def phase(self) -> int:

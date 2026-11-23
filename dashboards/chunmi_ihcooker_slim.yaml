@@ -1,0 +1,260 @@
+# App-like dashboard for the Chunmi IH Cooker Slim local integration.
+#
+# Entity IDs below assume the device is named "Chunmi IH Cooker Slim".
+# If you named it differently, open Developer Tools -> States, find the cooker
+# entities and replace the IDs in this file before importing it.
+
+views:
+  - title: 烹饪
+    path: cook
+    icon: mdi:stove
+    cards:
+      - type: markdown
+        content: "# 米家超薄电磁炉"
+
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## {{ states('sensor.chunmi_ih_cooker_slim_app_status') }}
+
+              当前菜单：**{{ states('sensor.chunmi_ih_cooker_slim_selected_menu') }}**<br>
+              故障：**{{ states('sensor.chunmi_ih_cooker_slim_fault') }}**<br>
+              固件：**{{ states('sensor.chunmi_ih_cooker_slim_firmware_version') }}**
+
+              > 内置模式和 160 字节云菜谱均已在本机通过本地 miIO 下发验证。
+              > 暂停/取消同样是本地已验证动作；菜谱数据来自可选 Joyami 目录。
+
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: tile
+                entity: sensor.chunmi_ih_cooker_slim_temperature
+                name: 锅底温度
+                icon: mdi:thermometer
+                tap_action:
+                  action: more-info
+              - type: tile
+                entity: sensor.chunmi_ih_cooker_slim_time_remaining
+                name: 剩余时间
+                icon: mdi:timer
+                tap_action:
+                  action: more-info
+              - type: tile
+                entity: sensor.chunmi_ih_cooker_slim_target_temperature
+                name: 目标温度
+                icon: mdi:thermometer-target
+                tap_action:
+                  action: more-info
+              - type: tile
+                entity: sensor.chunmi_ih_cooker_slim_fire_gears
+                name: 火力档位
+                icon: mdi:fire
+                tap_action:
+                  action: more-info
+
+          - type: entities
+            title: 实时状态
+            show_header_toggle: false
+            entities:
+              - entity: sensor.chunmi_ih_cooker_slim_status
+                name: 工作状态
+              - entity: sensor.chunmi_ih_cooker_slim_work_status
+                name: 设备状态
+              - entity: sensor.chunmi_ih_cooker_slim_phase
+                name: 烹饪阶段
+              - entity: sensor.chunmi_ih_cooker_slim_cook_time
+                name: 设定时长
+              - entity: sensor.chunmi_ih_cooker_slim_working_time
+                name: 已工作时长
+
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: button
+                name: 暂停
+                icon: mdi:pause
+                entity: button.chunmi_ih_cooker_slim_pause
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  target:
+                    entity_id: button.chunmi_ih_cooker_slim_pause
+              - type: button
+                name: 取消烹饪
+                icon: mdi:stop
+                entity: button.chunmi_ih_cooker_slim_cancel_cooking
+                tap_action:
+                  action: call-service
+                  service: button.press
+                  target:
+                    entity_id: button.chunmi_ih_cooker_slim_cancel_cooking
+                confirmation:
+                  text: 确认要终止烹饪吗？
+                  confirm_text: 终止
+
+      - type: vertical-stack
+        title: 快捷模式
+        cards:
+          - type: markdown
+            content: |
+              以下按钮对应米家 App 的五个内置模式。默认调用本地 MIoT 动作 2/1；
+              若你的固件只支持自定义菜谱，可在开发者工具中改用
+              `chunmi_ihcooker_slim.start_preset`，并设置 `method: recipe`。
+
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: button
+                name: 火锅
+                icon: mdi:pot-steam
+                tap_action:
+                  action: call-service
+                  service: chunmi_ihcooker_slim.start_preset
+                  data:
+                    preset: hotpot
+                confirmation:
+                  text: 确认启动火锅模式？
+                  confirm_text: 启动
+              - type: button
+                name: 蒸煮
+                icon: mdi:pot
+                tap_action:
+                  action: call-service
+                  service: chunmi_ihcooker_slim.start_preset
+                  data:
+                    preset: steam_boil
+                confirmation:
+                  text: 确认启动蒸煮模式？
+                  confirm_text: 启动
+              - type: button
+                name: 煲汤
+                icon: mdi:soup-kitchen
+                tap_action:
+                  action: call-service
+                  service: chunmi_ihcooker_slim.start_preset
+                  data:
+                    preset: simmer
+                confirmation:
+                  text: 确认启动煲汤模式？
+                  confirm_text: 启动
+              - type: button
+                name: 煎炒
+                icon: mdi:pan
+                tap_action:
+                  action: call-service
+                  service: chunmi_ihcooker_slim.start_preset
+                  data:
+                    preset: stir_fry
+                confirmation:
+                  text: 确认启动煎炒模式？
+                  confirm_text: 启动
+              - type: button
+                name: 油炸
+                icon: mdi:oil
+                tap_action:
+                  action: call-service
+                  service: chunmi_ihcooker_slim.start_preset
+                  data:
+                    preset: deep_fry
+                confirmation:
+                  text: 确认启动油炸模式？
+                  confirm_text: 启动
+              - type: button
+                name: 手动 15 分钟
+                icon: mdi:fire
+                tap_action:
+                  action: call-service
+                  service: chunmi_ihcooker_slim.start_simple_recipe
+                  data:
+                    name: 手动
+                    minutes: 15
+                    mode: fire
+                    value: 30
+                confirmation:
+                  text: 确认启动手动低火 15 分钟？
+                  confirm_text: 启动
+
+      - type: vertical-stack
+        title: 手动调节与设置
+        cards:
+          - type: entities
+            title: 火力与提示
+            entities:
+              - entity: number.chunmi_ih_cooker_slim_heat_level
+                name: 火力
+              - entity: switch.chunmi_ih_cooker_slim_finish_push
+                name: 完成推送
+              - entity: switch.chunmi_ih_cooker_slim_buzzer
+                name: 蜂鸣提示
+
+          - type: markdown
+            content: |
+              **说明**
+
+              - 火力写入在当前固件可被接受，但待机时可能被设备忽略。
+              - `finish_push` / `buzzer` 使用 JSON 布尔值写入，已规避 `-4005`。
+              - 内置模式与已验证的 160 字节云菜谱均通过本地 MIoT 动作下发并加热。
+              - 菜谱搜索/翻译使用匿名 HTTPS；设备控制始终走本地 miIO。
+              - 本地启动无需面板确认；完全关机后的网络可达性尚未验证。
+              - 使用电器时请勿无人值守。
+
+  - title: 菜谱
+    path: recipes
+    icon: mdi:book-open-variant
+    cards:
+      - type: custom:chunmi-ihcooker-card
+      - type: entities
+        title: 菜谱状态
+        entities:
+          - entity: sensor.chunmi_ih_cooker_slim_recipe_library
+            name: 菜谱库
+          - entity: sensor.chunmi_ih_cooker_slim_recipe_translation_status
+            name: 翻译状态
+          - entity: sensor.chunmi_ih_cooker_slim_recipe_refresh_status
+            name: 刷新状态
+          - entity: sensor.chunmi_ih_cooker_slim_current_action
+            name: 当前菜谱
+          - entity: sensor.chunmi_ih_cooker_slim_recipe_id
+            name: 菜谱 ID
+          - entity: text.chunmi_ih_cooker_slim_recipe_search_query
+            name: 搜索关键词
+      - type: button
+        name: 刷新菜谱
+        icon: mdi:download
+        tap_action:
+          action: call-service
+          service: chunmi_ihcooker_slim.refresh_recipes
+      - type: markdown
+        content: |
+          也可在开发者工具 → 动作中调用 `chunmi_ihcooker_slim.search_recipes`
+          和 `chunmi_ihcooker_slim.start_recipe`，后者只通过本地 miIO 启动。
+
+  - title: 诊断
+    path: diagnostics
+    icon: mdi:information-outline
+    cards:
+      - type: entities
+        title: 设备信息
+        entities:
+          - entity: sensor.chunmi_ih_cooker_slim_firmware_version
+            name: 固件版本
+          - entity: sensor.chunmi_ih_cooker_slim_recipe_type
+            name: 菜谱类型
+          - entity: sensor.chunmi_ih_cooker_slim_error_code
+            name: 错误码
+          - entity: sensor.chunmi_ih_cooker_slim_step_time
+            name: 当前步骤时间
+          - entity: sensor.chunmi_ih_cooker_slim_total_step_time
+            name: 总步骤时间
+          - entity: binary_sensor.chunmi_ih_cooker_slim_cooking
+            name: 烹饪中
+          - entity: binary_sensor.chunmi_ih_cooker_slim_paused
+            name: 已暂停
+          - entity: binary_sensor.chunmi_ih_cooker_slim_fault
+            name: 故障
+          - entity: binary_sensor.chunmi_ih_cooker_slim_finished
+            name: 已完成

@@ -17,12 +17,21 @@ from homeassistant.const import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
+    APP_STATUS_ERROR,
+    APP_STATUS_MAP,
+    DATA_ACTIVE_RECIPE_ID,
     DATA_COORDINATOR,
+    DATA_RECIPES,
+    DERIVED_APP_STATUS,
     DOMAIN,
     FAULT_MAP,
+    FAULTY_WORK_STATUSES,
+    MANUFACTURER,
+    MODEL,
     PROP_APPOINT_TIME,
     PROP_CHARGE_PHASE,
     PROP_COOK_TIME,
@@ -72,6 +81,13 @@ class SensorDef:
 
 SENSORS: tuple[SensorDef, ...] = (
     SensorDef(PROP_STATUS, "Status", icon="mdi:state-machine", value_map=STATUS_MAP),
+    SensorDef(
+        DERIVED_APP_STATUS,
+        "App status",
+        icon="mdi:stove",
+        source_key=PROP_STATUS,
+        derived=DERIVED_APP_STATUS,
+    ),
     SensorDef(PROP_WORK_STATUS, "Work status", icon="mdi:state-machine", value_map=WORK_STATUS_MAP),
     SensorDef(PROP_FAULT, "Fault", icon="mdi:alert-outline", value_map=FAULT_MAP),
     SensorDef(PROP_ERROR_CODE, "Error code", icon="mdi:alert-circle-outline"),
@@ -139,6 +155,15 @@ async def async_setup_entry(
         for definition in SENSORS
         if (definition.source_key or definition.key) in SUPPORTED_PROPERTIES
     )
+    async_add_entities(
+        [
+            CurrentActionSensor(coordinator),
+            ActiveRecipeIdSensor(coordinator),
+            RecipeLibrarySensor(coordinator, entry),
+            RecipeTranslationSensor(coordinator, entry),
+            RecipeRefreshSensor(coordinator, entry),
+        ]
+    )
 
 
 class IHCookerSensor(IHCookerEntity, SensorEntity):
@@ -177,9 +202,199 @@ class IHCookerSensor(IHCookerEntity, SensorEntity):
         if definition.derived == "menu_name":
             decoded = decode_menu(data.get(PROP_MENU))
             return decoded.get("name") if decoded else None
+        if definition.derived == DERIVED_APP_STATUS:
+            if (
+                data.get(PROP_FAULT) not in (None, 0)
+                or data.get(PROP_WORK_STATUS) in FAULTY_WORK_STATUSES
+            ):
+                return APP_STATUS_ERROR
+            status = data.get(PROP_STATUS)
+            return APP_STATUS_MAP.get(status, f"未知状态 {status}")
         value = data.get(self._source_key)
         if value is None:
             return None
         if definition.value_map is not None:
             return definition.value_map.get(value, f"unknown_{value}")
         return value
+
+
+class CurrentActionSensor(IHCookerEntity, SensorEntity):
+    """Human-readable action: recipe name, built-in mode, waiting, or Off."""
+
+    def __init__(self, coordinator: IHCookerDataUpdateCoordinator) -> None:
+        super().__init__(
+            coordinator, "current_action", "Current action", source_key=PROP_STATUS
+        )
+        self._attr_icon = "mdi:pot-steam"
+
+    @property
+    def native_value(self) -> str:
+        """Return the active recipe name or the current mode."""
+        data = self.coordinator.data or {}
+        status = data.get(PROP_STATUS)
+        runtime = self.hass.data[DOMAIN][self.coordinator.config_entry.entry_id]
+        recipe_id = runtime.get(DATA_ACTIVE_RECIPE_ID)
+        library = runtime.get(DATA_RECIPES)
+        recipe = None
+        if recipe_id and library is not None:
+            recipe = getattr(library, "_by_id", {}).get(int(recipe_id))
+        if status in (None, 0):
+            if recipe_id:
+                name = (
+                    str(library.summary(recipe).get("name") or "Recipe")
+                    if recipe and library is not None
+                    else "Recipe"
+                )
+                return f"{name} — waiting for panel"
+            return "Off"
+        if recipe:
+            return str(library.summary(recipe).get("name") or "External Recipe")
+        menu_name = decode_menu(data.get(PROP_MENU)) or {}
+        name = menu_name.get("name")
+        if name and name not in ("Unknown", "—"):
+            return str(name)
+        return "External Recipe"
+
+
+class ActiveRecipeIdSensor(IHCookerEntity, SensorEntity):
+    """Active bundled recipe ID; blank for off/built-in modes."""
+
+    def __init__(self, coordinator: IHCookerDataUpdateCoordinator) -> None:
+        super().__init__(
+            coordinator, "active_recipe_id", "Recipe ID", source_key=PROP_STATUS
+        )
+        self._attr_icon = "mdi:identifier"
+
+    @property
+    def native_value(self) -> str | int | None:
+        """Return the active recipe ID when known."""
+        data = self.coordinator.data or {}
+        status = data.get(PROP_STATUS)
+        runtime = self.hass.data[DOMAIN][self.coordinator.config_entry.entry_id]
+        recipe_id = runtime.get(DATA_ACTIVE_RECIPE_ID)
+        if status in (None, 0):
+            return int(recipe_id) if recipe_id else ""
+        if recipe_id:
+            return int(recipe_id)
+        return "unknown"
+
+
+class _RecipeEntity(SensorEntity):
+    """Base for recipe-library status sensors."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self, coordinator: IHCookerDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        self._entry = entry
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, coordinator.identifier)},
+            name=entry.data.get("name") or "Chunmi IH Cooker Slim",
+            manufacturer=MANUFACTURER,
+            model=getattr(coordinator.info, "model", MODEL) or MODEL,
+        )
+
+    @property
+    def _library(self):
+        return self.hass.data[DOMAIN][self._entry.entry_id][DATA_RECIPES]
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._library.add_listener(self.async_write_ha_state)
+
+    async def async_will_remove_from_hass(self) -> None:
+        self._library.remove_listener(self.async_write_ha_state)
+        await super().async_will_remove_from_hass()
+
+
+class RecipeLibrarySensor(_RecipeEntity):
+    """Expose the recipe catalogue, favorites and last viewed recipe."""
+
+    _attr_name = "Recipe library"
+    _attr_icon = "mdi:book-open-variant"
+
+    def __init__(
+        self, coordinator: IHCookerDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_recipe_library"
+
+    @property
+    def native_value(self) -> int:
+        return len(self._library.recipes)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        library = self._library
+        return {
+            "language": library.display_language,
+            "language_label": library.language_label,
+            "source": library.source,
+            "last_refresh": library.last_refresh,
+            "last_error": library.last_error,
+            "favorite_count": len(library.favorites),
+            "favorites": [
+                library.summary(library._by_id[recipe_id])
+                for recipe_id in sorted(library.favorites)
+                if recipe_id in library._by_id
+            ],
+            "last_query": library.last_query,
+            "last_search": library.last_search,
+            "last_recipe": library.last_recipe,
+            "translation_warning": library.translation_warning,
+        }
+
+
+class RecipeTranslationSensor(_RecipeEntity):
+    """Show translation service problems from the last recipe refresh."""
+
+    _attr_name = "Recipe translation status"
+    _attr_icon = "mdi:translate"
+
+    def __init__(
+        self, coordinator: IHCookerDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_recipe_translation_status"
+
+    @property
+    def native_value(self) -> str:
+        return self._library.translation_warning or "OK"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {
+            "failed_strings": self._library.translation_failures,
+            "last_refresh": self._library.last_refresh,
+        }
+
+
+class RecipeRefreshSensor(_RecipeEntity):
+    """Shared recipe-refresh state so every card sees the same progress."""
+
+    _attr_name = "Recipe refresh status"
+    _attr_icon = "mdi:sync"
+
+    def __init__(
+        self, coordinator: IHCookerDataUpdateCoordinator, entry: ConfigEntry
+    ) -> None:
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{entry.entry_id}_recipe_refresh_status"
+
+    @property
+    def native_value(self) -> str:
+        return self._library.refresh_phase
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        library = self._library
+        total = library.refresh_total
+        done = library.refresh_done
+        return {
+            "in_progress": library.refresh_phase not in ("idle", "done"),
+            "phase": library.refresh_phase,
+            "done": done,
+            "total": total,
+            "percent": min(100, round(done / total * 100)) if total else 0,
+        }

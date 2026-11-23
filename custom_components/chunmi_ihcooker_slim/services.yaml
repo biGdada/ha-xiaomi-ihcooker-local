@@ -1,8 +1,69 @@
+start_preset:
+  name: Start app preset
+  description: >-
+    Start one of the five Mi Home presets by name. By default this uses the
+    built-in mode action (2/1); choose "recipe" to build and send the matching
+    cook profile through action 3/1 instead. The built-in path was verified on
+    firmware 2.2.0_0005; the recipe path uses the same argument format but has
+    not been individually tested.
+  fields:
+    device_id:
+      name: Device
+      description: Target cooker device ID. Optional when only one cooker is configured.
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    preset:
+      name: Preset
+      description: 火锅 / 蒸煮 / 煲汤 / 煎炒 / 油炸.
+      required: true
+      default: hotpot
+      selector:
+        select:
+          options:
+            - hotpot
+            - steam_boil
+            - simmer
+            - stir_fry
+            - deep_fry
+    method:
+      name: Start method
+      description: Built-in mode is simpler; recipe sends a generated cook profile.
+      default: built_in
+      selector:
+        select:
+          options:
+            - built_in
+            - recipe
+    minutes:
+      name: Minutes
+      description: Optional duration override for the recipe method.
+      selector:
+        number:
+          min: 1
+          max: 240
+          mode: slider
+    fire:
+      name: Fire level
+      description: Optional fire override for the recipe method (0-255).
+      selector:
+        number:
+          min: 0
+          max: 255
+    temperature:
+      name: Temperature
+      description: Optional temperature override for the recipe method (0-255).
+      selector:
+        number:
+          min: 0
+          max: 255
+
 start_cook:
   name: Start built-in mode
   description: >-
-    Start one of the five built-in modes using MIoT action 2/1. This action is
-    not implemented locally on firmware 2.2.0_0005 and will report an error.
+    Start one of the five built-in modes using MIoT action 2/1. Verified on
+    firmware 2.2.0_0005: mode 1 starts heating without a panel press and can be
+    stopped with cancel_cooking.
   fields:
     device_id:
       name: Device
@@ -44,7 +105,7 @@ start_cooking:
   name: Start recipe
   description: >-
     Start a raw cook script. Requires a GBK recipe name and a hex cook_data
-    string. Cloud-only on firmware 2.2.0_0005.
+    string. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -65,7 +126,7 @@ start_cooking:
 
 pause_cooking:
   name: Pause cooking (v2)
-  description: MIoT action 3/2. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/2. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -75,7 +136,7 @@ pause_cooking:
 
 resume_cooking:
   name: Resume cooking
-  description: MIoT action 3/3. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/3. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -85,7 +146,7 @@ resume_cooking:
 
 cancel_cooking_v2:
   name: Cancel cooking (v2)
-  description: MIoT action 3/4. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/4. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -95,7 +156,7 @@ cancel_cooking_v2:
 
 set_menu:
   name: Save recipe to menu
-  description: MIoT action 3/5. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/5. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -120,7 +181,7 @@ set_menu:
 
 delete_menu:
   name: Delete menu entry
-  description: MIoT action 3/6. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/6. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -132,8 +193,8 @@ delete_menu:
       required: true
       selector:
         number:
-          min: 0
-          max: 255
+          min: 1
+          max: 8
     bell:
       name: Bell
       default: false
@@ -142,7 +203,7 @@ delete_menu:
 
 continue_cooking:
   name: Continue cooking
-  description: MIoT action 3/7. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/7. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -152,7 +213,7 @@ continue_cooking:
 
 next_step:
   name: Next step
-  description: MIoT action 3/8. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/8. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -162,7 +223,7 @@ next_step:
 
 factory_reset:
   name: Factory reset
-  description: MIoT action 3/9. Use with care. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/9. Use with care. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -172,7 +233,7 @@ factory_reset:
 
 set_charge:
   name: Set charge
-  description: MIoT action 3/10. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/10. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -187,7 +248,7 @@ set_charge:
 
 get_selfcheck:
   name: Run self check
-  description: MIoT action 3/12. Cloud-only on firmware 2.2.0_0005.
+  description: MIoT action 3/12. Firmware handlers are present; local behaviour is not yet hardware-verified.
   fields:
     device_id:
       name: Device
@@ -296,3 +357,220 @@ set_simple_menu:
       default: false
       selector:
         boolean:
+
+
+search_recipes:
+  name: Search recipes
+  description: Search the recipe library by Chinese or English name, ingredient or ID.
+  fields:
+    device_id:
+      name: Device
+      description: Target cooker. Optional when only one cooker is configured.
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    query:
+      name: Search query
+      description: Omit to use the Recipe search query text entity.
+      example: 大阪烧
+      selector:
+        text:
+    limit:
+      name: Maximum results
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 100
+    favorites_only:
+      name: Favorites only
+      default: false
+      selector:
+        boolean:
+  response:
+    recipes:
+      description: Matching recipes with localized names, images and favorite flags.
+    language:
+      description: Language code used for localized names.
+    total:
+      description: Total number of recipes in the library.
+
+get_recipe:
+  name: Get recipe details
+  description: Return a recipe with localized ingredients, steps, tips and slim cookcode.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    recipe:
+      name: Recipe
+      description: Recipe ID or name, in Chinese or English.
+      required: true
+      example: 4432
+      selector:
+        text:
+    language:
+      name: Language
+      description: Display language for this response.
+      default: ha
+      selector:
+        select:
+          options:
+            - ha
+            - original
+  response:
+    id:
+      description: Recipe ID.
+    name:
+      description: Localized recipe name.
+    ingredients:
+      description: Localized ingredient list with quantities.
+    steps:
+      description: Localized cooking steps.
+
+start_recipe:
+  name: Start cloud recipe locally
+  description: >-
+    Start a bundled Joyami recipe through local miIO. The 160-byte profile is
+    normalized with operation source 01 and a fresh CRC before it is sent.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    recipe:
+      name: Recipe
+      description: Recipe ID or name, in Chinese or English.
+      required: true
+      example: 4209
+      selector:
+        text:
+  response:
+    id:
+      description: Recipe ID that was started.
+    name:
+      description: Localized recipe name.
+    active_cooking:
+      description: True when the cooker reported an active cooking state after the command.
+    waiting_for_panel:
+      description: True when the profile was accepted but the cooker is waiting for a knob press.
+
+add_favorite:
+  name: Save recipe to favorites
+  description: Save a recipe to the local favorites list in Home Assistant.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    recipe:
+      name: Recipe
+      description: Recipe ID or name, in Chinese or English.
+      required: true
+      selector:
+        text:
+
+remove_favorite:
+  name: Remove recipe from favorites
+  description: Remove a recipe from the local favorites list in Home Assistant.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    recipe:
+      name: Recipe
+      description: Recipe ID or name, in Chinese or English.
+      required: true
+      selector:
+        text:
+
+list_favorites:
+  name: List favorite recipes
+  description: Return all locally saved favorite recipes.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+  response:
+    recipes:
+      description: Favorite recipes with localized names and images.
+
+refresh_recipes:
+  name: Refresh recipes
+  description: >-
+    Redownload the public Joyami catalogue, merge bundled translations and use
+    Google Translate for missing text. Failures keep the bundled catalogue.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+  response:
+    count:
+      description: Number of recipes available after the refresh.
+    last_refresh:
+      description: Timestamp of the successful refresh.
+    error:
+      description: Error message when the refresh failed, otherwise null.
+    translation_warning:
+      description: Translation warning, otherwise null.
+
+set_recipe_language:
+  name: Set recipe language
+  description: Switch recipe text between the Home Assistant language and original Chinese.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    language:
+      name: Language
+      required: true
+      default: ha
+      selector:
+        select:
+          options:
+            - ha
+            - original
+  response:
+    language:
+      description: Active bundled language code.
+
+translate_recipe:
+  name: Translate a recipe
+  description: >-
+    Translate missing English text for one recipe using Google Translate and
+    save it to the local translation and recipe caches.
+  fields:
+    device_id:
+      name: Device
+      selector:
+        device:
+          integration: chunmi_ihcooker_slim
+    recipe:
+      name: Recipe
+      description: Recipe ID or name, in Chinese or English.
+      required: true
+      selector:
+        text:
+  response:
+    id:
+      description: Recipe ID.
+    name:
+      description: Localized recipe name.
+    translated:
+      description: Number of strings translated.
+    failed:
+      description: Number of strings that could not be translated.
+    error:
+      description: First translation error, or null.

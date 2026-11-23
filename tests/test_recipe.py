@@ -25,7 +25,7 @@ def test_crc16_reference_vector() -> None:
 
 def test_gbk_roundtrip() -> None:
     encoded = recipe.encode_gbk("火锅")
-    assert encoded == "bbf0b9f8"
+    assert encoded == "bbf0b9f800"
     assert recipe.decode_gbk(encoded) == "火锅"
     assert recipe.decode_gbk("Manual") == "Manual"
 

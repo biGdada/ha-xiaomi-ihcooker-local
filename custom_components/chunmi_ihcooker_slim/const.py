@@ -28,9 +28,55 @@ MAX_TIMEOUT = 30
 DATA_COORDINATOR = "coordinator"
 DATA_DEVICE = "device"
 DATA_INFO = "info"
+DATA_RECIPES = "recipes"
+DATA_ACTIVE_RECIPE_ID = "active_recipe_id"
+DATA_RECIPE_QUERY = "recipe_query"
+DATA_SELECTED_PRESET = "selected_preset"
 SERVICES_REGISTERED = "_services_registered"
 
-PLATFORMS = ("sensor", "binary_sensor", "switch", "number", "button")
+ATTR_DEVICE_ID = "device_id"
+
+SERVICE_START_PRESET = "start_preset"
+PRESET_METHOD_BUILT_IN = "built_in"
+PRESET_METHOD_RECIPE = "recipe"
+DERIVED_APP_STATUS = "app_status"
+
+# Recipe library services.
+SERVICE_SEARCH_RECIPES = "search_recipes"
+SERVICE_GET_RECIPE = "get_recipe"
+SERVICE_START_RECIPE = "start_recipe"
+SERVICE_ADD_FAVORITE = "add_favorite"
+SERVICE_REMOVE_FAVORITE = "remove_favorite"
+SERVICE_LIST_FAVORITES = "list_favorites"
+SERVICE_REFRESH_RECIPES = "refresh_recipes"
+SERVICE_SET_RECIPE_LANGUAGE = "set_recipe_language"
+SERVICE_TRANSLATE_RECIPE = "translate_recipe"
+
+ATTR_RECIPE = "recipe"
+ATTR_QUERY = "query"
+ATTR_LIMIT = "limit"
+ATTR_FAVORITES_ONLY = "favorites_only"
+ATTR_LANGUAGE = "language"
+
+CONF_RECIPE_SOURCE = "recipe_source"
+DEFAULT_RECIPE_SOURCE = "cache"
+RECIPE_SOURCE_CACHE = "cache"
+RECIPE_SOURCE_API = "api"
+RECIPE_SOURCE_JSON = "json"
+
+RECIPE_LANGUAGE_HA = "ha"
+RECIPE_LANGUAGE_ORIGINAL = "original"
+DEFAULT_RECIPE_LANGUAGE = RECIPE_LANGUAGE_HA
+
+PLATFORMS = (
+    "sensor",
+    "binary_sensor",
+    "switch",
+    "number",
+    "button",
+    "text",
+    "select",
+)
 
 # --- MIoT properties -------------------------------------------------------
 # Keys are used as the "did" in miIO get_properties/set_properties calls.
@@ -169,6 +215,32 @@ ACTIONS: dict[str, tuple[int, int]] = {
     ACTION_GET_SELFCHECK: (3, 12),
 }
 
+# Firmware 2.2.0_0005 does not accept plain values in a MIoT action's ``in``
+# list.  Every entry must be an object with the argument's property id (piid)
+# and a JSON value of the expected type.  The piids and types below come from
+# the public MIoT spec and were confirmed in the firmware's action validators.
+ACTION_ARGUMENT_PIIDS: dict[str, tuple[int, ...]] = {
+    ACTION_START_COOK: (8,),                    # cook-mode
+    ACTION_CANCEL_COOKING: (),
+    ACTION_PAUSE: (),
+    ACTION_START_COOKING: (22, 17, 19),         # recipe-name, cook-data, user-id
+    ACTION_PAUSE_COOKING: (20, 19),             # information, user-id
+    ACTION_PAUSE_RECOVER: (20, 19),
+    ACTION_CANCEL_COOKING_V2: (20, 19),
+    ACTION_SET_MENU: (17, 19, 21, 22),          # cook-data, user-id, bell, recipe-name
+    ACTION_DELETE_MENU: (19, 20, 21, 23),       # user-id, information, bell, menu-order
+    ACTION_CONTINUE_COOKING: (20, 19),
+    ACTION_NEXT_STEP_COOKING: (20, 19),
+    ACTION_FACTORY_RESET: (20, 19),
+    ACTION_SET_CHARGE: (18,),                   # charge-data
+    ACTION_GET_ERROR_RECORDED: (31,),           # error-recorded-index
+    ACTION_GET_SELFCHECK: (34,),                # selfcheck-cmd
+}
+
+# Piids that the firmware validator requires to be JSON numbers.  Everything
+# else in an action's ``in`` list must be a JSON string.
+ACTION_INTEGER_ARGUMENTS = frozenset({8, 21, 23, 31, 34})
+
 # Actions that accepted an empty ``in`` list on firmware 2.2.0_0005.
 VERIFIED_ACTIONS = frozenset({ACTION_CANCEL_COOKING, ACTION_PAUSE})
 
@@ -181,6 +253,17 @@ STATUS_MAP: dict[int, str] = {
     4: "paused",
     5: "shutdown",
 }
+
+# Mirrors the wording used by the Mi Home plugin strings.
+APP_STATUS_MAP: dict[int, str] = {
+    0: "待机中",
+    1: "烹饪中",
+    2: "定时中",
+    3: "预约中",
+    4: "暂停中",
+    5: "休眠中",
+}
+APP_STATUS_ERROR = "故障"
 
 WORK_STATUS_MAP: dict[int, str] = {
     1: "idle",
@@ -237,7 +320,9 @@ ACTIVE_WORK_STATUSES = frozenset({2, 10})
 PAUSED_WORK_STATUSES = frozenset({12, 19})
 FAULTY_WORK_STATUSES = frozenset({8})
 
-SUCCESS_CODES = frozenset({0, 1})
+# Firmware uses 0 for success and 1 for refusal/no-effect. Treating 1 as
+# success hides failed starts and menu writes.
+SUCCESS_CODES = frozenset({0})
 
 MIOT_ERROR_CODES: dict[int, str] = {
     -4001: "property is not readable on this firmware",

@@ -1,2 +1,4 @@
 python-miio==0.5.12
 pytest>=8.0
+requests>=2.31.0
+PyYAML>=6.0

@@ -32,7 +32,7 @@ if spec is None or spec.loader is None:
 const = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(const)
 
-GBK_PROPERTIES = {const.PROP_MENU, const.PROP_RECIPE_NAME}
+GBK_PROPERTIES = {const.PROP_MENU}
 
 
 def decode_gbk_hex(value: object) -> str | None:
