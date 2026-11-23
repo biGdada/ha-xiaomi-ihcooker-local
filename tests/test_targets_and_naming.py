@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 pytest.importorskip("homeassistant")
@@ -10,6 +12,7 @@ import custom_components.chunmi_ihcooker_slim as component
 from custom_components.chunmi_ihcooker_slim import sensor
 from custom_components.chunmi_ihcooker_slim.const import (
     ATTR_DEVICE_ID,
+    PROP_STATUS,
     SERVICE_START_RECIPE,
 )
 from custom_components.chunmi_ihcooker_slim.service_schema import SERVICE_SCHEMAS
@@ -21,6 +24,12 @@ def test_device_schema_accepts_ha_normalized_targets() -> None:
     assert schema({ATTR_DEVICE_ID: "abc"})[ATTR_DEVICE_ID] == "abc"
     assert schema({ATTR_DEVICE_ID: ["abc"]})[ATTR_DEVICE_ID] == ["abc"]
     assert schema({"entity_id": ["sensor.foo"]})["entity_id"] == ["sensor.foo"]
+
+
+def test_stopped_after_cancel_detects_idle_states() -> None:
+    assert component._stopped_after_cancel(SimpleNamespace(data={PROP_STATUS: 0}))
+    assert component._stopped_after_cancel(SimpleNamespace(data={PROP_STATUS: 5}))
+    assert not component._stopped_after_cancel(SimpleNamespace(data={PROP_STATUS: 1}))
 
 
 def test_recipe_schema_accepts_list_device_id() -> None:

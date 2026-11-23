@@ -377,8 +377,12 @@ class ChunmiIHCookerCard extends HTMLElement {
     return (
       statusState === "idle" ||
       statusState === "off" ||
+      statusState === "shutdown" ||
+      statusState === "sleeping" ||
       statusState === "—" ||
-      statusState === "unknown"
+      statusState === "unknown" ||
+      statusState === "待机中" ||
+      statusState === "休眠中"
     );
   }
 

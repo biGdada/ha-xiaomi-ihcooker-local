@@ -235,6 +235,12 @@ def _entry_id_for_call(hass: HomeAssistant, call: ServiceCall) -> str:
     raise HomeAssistantError("Multiple cookers configured; set device_id in the call")
 
 
+def _stopped_after_cancel(coordinator: IHCookerDataUpdateCoordinator) -> bool:
+    """Return True when the cooker is already idle after a cancel attempt."""
+    data = coordinator.data or {}
+    return data.get(PROP_STATUS) in (None, 0, 5)
+
+
 def _get_coordinator(
     hass: HomeAssistant, call: ServiceCall
 ) -> IHCookerDataUpdateCoordinator:
@@ -312,7 +318,26 @@ def _async_register_services(hass: HomeAssistant) -> None:
         await _async_device_method(hass, call, "start_cook", int(call.data[ATTR_MODE]))
 
     async def cancel_cooking(call: ServiceCall) -> None:
-        await _get_coordinator(hass, call).async_call("cancel_cooking")
+        coordinator = _get_coordinator(hass, call)
+        try:
+            await coordinator.async_call("cancel_cooking")
+        except HomeAssistantError as exc:
+            # Firmware 2.2.0_0005 sometimes answers 2/2 cancel with code 1.
+            # If the cooker is already idle, the requested result is already
+            # true, so do not surface a spurious failure to the card.
+            await coordinator.async_request_refresh()
+            if _stopped_after_cancel(coordinator):
+                _clear_active_recipe(hass, call)
+                return
+            # Cloud-recipe sessions may only accept the app's 3/4 cancel.
+            try:
+                await _async_device_method(hass, call, "cancel_cooking_v2")
+            except HomeAssistantError:
+                await coordinator.async_request_refresh()
+                if _stopped_after_cancel(coordinator):
+                    _clear_active_recipe(hass, call)
+                    return
+                raise exc
         _clear_active_recipe(hass, call)
 
     async def pause(call: ServiceCall) -> None:

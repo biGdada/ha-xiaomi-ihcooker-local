@@ -262,7 +262,7 @@ APP_STATUS_MAP: dict[int, str] = {
     2: "timing",
     3: "appointment",
     4: "paused",
-    5: "sleeping",
+    5: "shutdown",
 }
 APP_STATUS_ERROR = "fault"
 
