@@ -69,7 +69,12 @@ ATTR_METHOD = "method"
 ATTR_FIRE = "fire"
 ATTR_TEMPERATURE = "temperature"
 
-DEVICE_SCHEMA = {vol.Optional(ATTR_DEVICE_ID): cv.string}
+# HA normalizes `target` fields to lists before validating a service schema.
+# The card sends a scalar device_id, so accept both scalar and list forms.
+DEVICE_SCHEMA = {
+    vol.Optional(ATTR_DEVICE_ID): vol.Any(cv.string, [cv.string]),
+    vol.Optional(ATTR_ENTITY_ID): cv.entity_ids,
+}
 
 SERVICES = (
     SERVICE_START_PRESET,

@@ -42,8 +42,9 @@ def test_value_maps_cover_observed_states() -> None:
 
 
 def test_app_status_and_preset_constants() -> None:
-    assert const.APP_STATUS_MAP[1] == "烹饪中"
-    assert const.APP_STATUS_MAP[5] == "休眠中"
+    assert const.APP_STATUS_MAP[1] == "cooking"
+    assert const.APP_STATUS_MAP[5] == "sleeping"
+    assert const.APP_STATUS_ERROR == "fault"
     assert const.SERVICE_START_PRESET == "start_preset"
     assert const.PRESET_METHOD_BUILT_IN == "built_in"
 

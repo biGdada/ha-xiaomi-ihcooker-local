@@ -133,7 +133,9 @@ Options can be changed later without re-entering the token.
 - **Switches** — finish push notification and buzzer.
 - **Number** — heat level (writable on 2.2.0_0005).
 - **Buttons** — cancel cooking and pause.
-- **Sensor** — an `App status` sensor that uses the same Chinese wording as Mi Home.
+- **Sensor** — an `App status` sensor with English states; recipe and menu names
+  in `Current action` are also forced to English so entity states stay consistent
+  regardless of the Home Assistant display language. The card remains bilingual.
 
 ## App-like controls
 

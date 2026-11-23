@@ -254,16 +254,17 @@ STATUS_MAP: dict[int, str] = {
     5: "shutdown",
 }
 
-# Mirrors the wording used by the Mi Home plugin strings.
+# Entity states are always English. The custom card owns its own bilingual
+# labels, so sensor states must not follow the Home Assistant display language.
 APP_STATUS_MAP: dict[int, str] = {
-    0: "待机中",
-    1: "烹饪中",
-    2: "定时中",
-    3: "预约中",
-    4: "暂停中",
-    5: "休眠中",
+    0: "idle",
+    1: "cooking",
+    2: "timing",
+    3: "appointment",
+    4: "paused",
+    5: "sleeping",
 }
-APP_STATUS_ERROR = "故障"
+APP_STATUS_ERROR = "fault"
 
 WORK_STATUS_MAP: dict[int, str] = {
     1: "idle",

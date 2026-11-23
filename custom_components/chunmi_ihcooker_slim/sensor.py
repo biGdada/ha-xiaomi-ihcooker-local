@@ -23,6 +23,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import (
     APP_STATUS_ERROR,
     APP_STATUS_MAP,
+    COOK_MODE_MAP,
     DATA_ACTIVE_RECIPE_ID,
     DATA_COORDINATOR,
     DATA_RECIPES,
@@ -62,6 +63,7 @@ from .const import (
 )
 from .coordinator import IHCookerDataUpdateCoordinator
 from .entity import IHCookerEntity
+from .presets import PRESETS
 from .recipe import decode_menu
 
 
@@ -141,6 +143,57 @@ SENSORS: tuple[SensorDef, ...] = (
 )
 
 
+def _has_chinese(text: str) -> bool:
+    """Return True when text contains CJK characters."""
+    return any("\u4e00" <= char <= "\u9fff" for char in text)
+
+
+def _active_recipe(library: Any, recipe_id: Any) -> dict[str, Any] | None:
+    """Look up the loaded bundle recipe by ID, tolerating string IDs."""
+    if not recipe_id or library is None:
+        return None
+    try:
+        return getattr(library, "_by_id", {}).get(int(recipe_id))
+    except (TypeError, ValueError):
+        return None
+
+
+def _english_recipe_name(library: Any, recipe_id: Any) -> str | None:
+    """Return a bundled recipe name in English, independent of HA language."""
+    recipe = _active_recipe(library, recipe_id)
+    if recipe is None:
+        return None
+    return str(library.summary(recipe, "en").get("name") or "External Recipe")
+
+
+def _english_menu_name(data: dict[str, Any], library: Any) -> str | None:
+    """Return an English label for a built-in mode or device menu payload."""
+    decoded = decode_menu(data.get(PROP_MENU)) or {}
+    menu_id = decoded.get("menu_id")
+    if menu_id in COOK_MODE_MAP:
+        return COOK_MODE_MAP[menu_id]
+    name = decoded.get("name")
+    if not name or name in ("Unknown", "—"):
+        return None
+    name = str(name)
+    for preset in PRESETS.values():
+        if preset.name == name:
+            return preset.name_en
+    for recipe in getattr(library, "recipes", []) or []:
+        if str(recipe.get("name_zh") or "") == name:
+            return str(recipe.get("name_en") or name)
+    if not _has_chinese(name):
+        return name
+    return None
+
+
+def _english_name(
+    data: dict[str, Any], library: Any, recipe_id: Any
+) -> str | None:
+    """Return an always-English name for the loaded recipe or mode."""
+    return _english_recipe_name(library, recipe_id) or _english_menu_name(data, library)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -200,8 +253,17 @@ class IHCookerSensor(IHCookerEntity, SensorEntity):
         data = self.coordinator.data or {}
         definition = self._definition
         if definition.derived == "menu_name":
-            decoded = decode_menu(data.get(PROP_MENU))
-            return decoded.get("name") if decoded else None
+            runtime = self.hass.data[DOMAIN][self.coordinator.config_entry.entry_id]
+            name = _english_name(
+                data,
+                runtime.get(DATA_RECIPES),
+                runtime.get(DATA_ACTIVE_RECIPE_ID),
+            )
+            if name:
+                return name
+            decoded = decode_menu(data.get(PROP_MENU)) or {}
+            menu_id = decoded.get("menu_id")
+            return f"Menu {menu_id}" if menu_id else None
         if definition.derived == DERIVED_APP_STATUS:
             if (
                 data.get(PROP_FAULT) not in (None, 0)
@@ -209,7 +271,7 @@ class IHCookerSensor(IHCookerEntity, SensorEntity):
             ):
                 return APP_STATUS_ERROR
             status = data.get(PROP_STATUS)
-            return APP_STATUS_MAP.get(status, f"未知状态 {status}")
+            return APP_STATUS_MAP.get(status, f"unknown status {status}")
         value = data.get(self._source_key)
         if value is None:
             return None
@@ -229,31 +291,18 @@ class CurrentActionSensor(IHCookerEntity, SensorEntity):
 
     @property
     def native_value(self) -> str:
-        """Return the active recipe name or the current mode."""
+        """Return the active recipe name or the current mode, always in English."""
         data = self.coordinator.data or {}
         status = data.get(PROP_STATUS)
         runtime = self.hass.data[DOMAIN][self.coordinator.config_entry.entry_id]
         recipe_id = runtime.get(DATA_ACTIVE_RECIPE_ID)
         library = runtime.get(DATA_RECIPES)
-        recipe = None
-        if recipe_id and library is not None:
-            recipe = getattr(library, "_by_id", {}).get(int(recipe_id))
+        name = _english_name(data, library, recipe_id)
         if status in (None, 0):
             if recipe_id:
-                name = (
-                    str(library.summary(recipe).get("name") or "Recipe")
-                    if recipe and library is not None
-                    else "Recipe"
-                )
-                return f"{name} — waiting for panel"
+                return f"{name or 'Recipe'} — waiting for panel"
             return "Off"
-        if recipe:
-            return str(library.summary(recipe).get("name") or "External Recipe")
-        menu_name = decode_menu(data.get(PROP_MENU)) or {}
-        name = menu_name.get("name")
-        if name and name not in ("Unknown", "—"):
-            return str(name)
-        return "External Recipe"
+        return name or "External Recipe"
 
 
 class ActiveRecipeIdSensor(IHCookerEntity, SensorEntity):
